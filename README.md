@@ -20,6 +20,8 @@
 Juice Shop и ZAP запускались в Docker, ZAP обращался к цели через
 `host.docker.internal:3000`.
 
+![Главная страница Juice Shop](docs/screenshots/01-juiceshop-home.png)
+
 ### Как поднять стенд
 
 ```bash
@@ -85,11 +87,30 @@ CORS, раскрытие данных через заголовки).
 
 Полный отчёт: [`zap/zap-baseline-report.html`](zap/zap-baseline-report.html).
 
+![Отчёт ZAP (baseline scan)](docs/screenshots/08-zap-baseline-report.png)
+
 ### 1.2. Full scan (активный, Active Scan)
 
 Активный скан отправляет атакующие полезные нагрузки (инъекции, обход) и
-подтверждает эксплуатируемость. Полный отчёт: [`zap/zap-full-report.html`](zap/zap-full-report.html).
-Сводка алертов приведена в [`zap/ALERTS.md`](zap/ALERTS.md).
+подтверждает эксплуатируемость. Итог: **FAIL 0 / WARN 10 / PASS 131**. Важно,
+что active scan **независимо подтвердил ручные находки**:
+
+| Alert | Риск (ZAP) | Кол-во | Связь с ручной находкой |
+|---|---|---|---|
+| Backup File Disclosure | Medium | 31 | файлы в `/ftp` (находка 2.4) |
+| Bypassing 403 | Medium | 6 | обход запрета (Poison Null Byte, находка 2.5) |
+| CORS Misconfiguration | Medium (High) | 5 | небезопасный CORS (находка 2.6) |
+| Content Security Policy Header Not Set | Medium (High) | 5 | нет CSP (находка 2.6) |
+| Cross-Domain Misconfiguration | Medium | 5 | `ACAO: *` (находка 2.6) |
+
+Полный отчёт: [`zap/zap-full-report.html`](zap/zap-full-report.html),
+сводка — [`zap/ALERTS.md`](zap/ALERTS.md).
+
+![Отчёт ZAP (full scan)](docs/screenshots/09-zap-full-report.png)
+
+> SQLi и XSS намеренно подтверждались вручную (раздел 2): они завязаны на
+> бизнес-логику (форма входа, клиентский рендеринг поиска), поэтому
+> воспроизведение атаки нагляднее сигнатурного алерта сканера.
 
 ---
 
@@ -217,6 +238,17 @@ curl -sD - -o /dev/null http://localhost:3000/ | grep -i access-control
 Эти же проблемы независимо нашёл ZAP baseline (CSP не установлен, CORS misconfig).
 
 **OWASP:** A05:2021 Security Misconfiguration. **CVSS 3.1:** `AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N` = **5.3 (Medium)**.
+
+### 2.7. Дополнительное исследование — Score Board
+
+У Juice Shop есть встроенная панель `#/score-board` со списком всех заложенных
+уязвимостей. В ходе ручной верификации она автоматически отметила решёнными
+challenge'и, соответствующие найденным уязвимостям: **Login Admin**,
+**DOM XSS**, **Confidential Document**, **Forgotten Developer Backup**,
+**Poison Null Byte**, **Error Handling** — это независимое подтверждение, что
+атаки действительно сработали.
+
+![Score Board](docs/screenshots/04-score-board.png)
 
 ---
 
