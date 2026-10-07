@@ -1,0 +1,6 @@
+.DS_Store
+report/*.aux
+report/*.log
+.playwright-mcp/
+report/report.html
+zap/*-console.log
